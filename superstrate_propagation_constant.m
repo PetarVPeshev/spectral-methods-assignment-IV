@@ -10,26 +10,36 @@ addpath('../spectral-methods-library');
 c = physconst('LightSpeed');
 wave_impedance = 376.730313668;
 
-stratification.er = NaN(1, 1002);
+Ner = 102;
+Nf = 101;
+stratification.er = NaN(1, Ner);
 
 %% PARAMETERS
-wave.f = linspace(9, 11, 1001) * 1e9;
+wave.f = linspace(9, 11, Nf) * 1e9;
 stratification.h = 15 * 1e-3;
-stratification.er(1 : 1001) = linspace(1, 25, 1001);
-stratification.er(1002) = 12;
+stratification.er(1 : end - 1) = linspace(1, 25, Ner - 1);
+stratification.er(end) = 12;
 N = 1001;
+R = 1;
 
 %% DEPENDENT PARAMETERS
 wave.wavelength = c ./ wave.f;
 wave.k0 = 2 * pi ./ wave.wavelength;
 % frequency - col; er - row
 stratification.hs = wave.wavelength ./ (4 * sqrt(stratification.er'));
-stratification.hs(1002, :) = 2.1 * 1e-3;
+stratification.hs(Ner, :) = 2.1 * 1e-3;
 dipole.L = wave.wavelength / 2;
 dipole.W = wave.wavelength / 20;
 
+%% SPHERICAL COORDINATE SYSTEM
+theta = linspace(eps, pi / 2 - 0.1 * pi / 180, 100);
+phi = linspace(0, 2 * pi, 400);
+sph_grid = meshgrid_comb(theta, phi);
+z = R * cos(sph_grid(:, :, 1));
+
 krho_te = NaN(length(stratification.er), length(wave.f));
 krho_tm = NaN(length(stratification.er), length(wave.f));
+dir_broadside = NaN(length(stratification.er), length(wave.f));
 for er_idx = 1 : 1 : length(stratification.er)
     krho_norm = linspace(1, sqrt(stratification.er(er_idx)), N);
 
@@ -39,24 +49,34 @@ for er_idx = 1 : 1 : length(stratification.er)
         [krho_te(er_idx, f_idx), krho_tm(er_idx, f_idx)] ...
             = find_krho(wave.k0(f_idx), krho, 'Superstrate', ...
             stratification.h, stratification.hs(er_idx, f_idx), stratification.er(er_idx));
+        
+        [k_comp, ~] = wave_vector(1, wave.k0(f_idx), sph_grid);
+        KRHO = sqrt(k_comp(:, :, 1) .^ 2 + k_comp(:, :, 2) .^ 2);
+        [vte, ite, vtm, itm] = stratified_media(wave.k0(f_idx), KRHO, z, ...
+            'Superstrate', stratification.h, stratification.hs(er_idx, f_idx), stratification.er(er_idx));
+        SGF = spectral_gf(1, wave.k0(f_idx), k_comp(:, :, 1), k_comp(:, :, 2), vtm, vte, itm, ite, 'E', 'M');
+        Mx = ft_current(wave.k0(f_idx), k_comp, dipole.W(f_idx), dipole.L(f_idx), 1, 'dipole', 'x');
+        E = farfield(wave.k0(f_idx), R, sph_grid, k_comp(:, :, 3), z, SGF, Mx);
+        [dir, ~, ~] = directivity(1, E, sph_grid, R);
+        dir_broadside(er_idx, f_idx) = dir(1, 1);
     end
 end
     
 %% PLOT PROPAGATION CONSTANT FOR CONSTANT PERMITTIVITY
 figure('Position', [250 250 750 400]);
-plot(stratification.h ./ wave.wavelength, real(krho_te(1002, :) ./ wave.k0), ...
+plot(stratification.h ./ wave.wavelength, real(krho_te(end, :) ./ wave.k0), ...
     'LineWidth', 2.0, 'Color', [0 0.4470 0.7410], ...
     'DisplayName', '\Re\{TE1\}');
 hold on;
-plot(stratification.h ./ wave.wavelength, imag(krho_te(1002, :) ./ wave.k0), ...
+plot(stratification.h ./ wave.wavelength, imag(krho_te(end, :) ./ wave.k0), ...
     '--', 'LineWidth', 2.0, 'Color', [0 0.4470 0.7410], ...
     'DisplayName', '\Im\{TE1\}');
 hold on;
-plot(stratification.h ./ wave.wavelength, real(krho_tm(1002, :) ./ wave.k0), ...
+plot(stratification.h ./ wave.wavelength, real(krho_tm(end, :) ./ wave.k0), ...
     'LineWidth', 2.0, 'Color', [0.8500 0.3250 0.0980], ...
     'DisplayName', '\Re\{TM1\}');
 hold on;
-plot(stratification.h ./ wave.wavelength, imag(krho_tm(1002, :) ./ wave.k0), ...
+plot(stratification.h ./ wave.wavelength, imag(krho_tm(end, :) ./ wave.k0), ...
     '--', 'LineWidth', 2.0, 'Color', [0.8500 0.3250 0.0980], ...
     'DisplayName', '\Im\{TM1\}');
 grid on;
@@ -68,38 +88,64 @@ xlabel('h / \lambda_{0}');
 ylabel('k_{\rho} / k_{0}');
 title(['Normalized k_{\rho} @ Superstrate, h = ' ...
     num2str(stratification.h * 1e3) ' mm, h_{s} = ' ...
-    num2str(stratification.hs(1002, 1) * 1e3) ' mm, ' ...
-    'and \epsilon_{r} = ' num2str(stratification.er(1002))]);
+    num2str(stratification.hs(end, 1) * 1e3) ' mm, ' ...
+    'and \epsilon_{r} = ' num2str(stratification.er(102))]);
 saveas(gcf, ['figures\superstrate_krho_er_const_' ...
-    num2str(stratification.er(1002)) '.fig']);
+    num2str(stratification.er(end)) '.fig']);
     
 %% PLOT PROPAGATION CONSTANT
 figure('Position', [250 250 750 400]);
-plot(stratification.er(1 : 1001), real(krho_te(1 : 1001, 501) ./ wave.k0(501)), ...
+plot(stratification.er(1 : 101), real(krho_te(1 : end - 1, ceil(Nf / 2)) ./ wave.k0(ceil(Nf / 2))), ...
     'LineWidth', 2.0, 'Color', [0 0.4470 0.7410], ...
     'DisplayName', '\Re\{TE1\}');
 hold on;
-plot(stratification.er(1 : 1001), imag(krho_te(1 : 1001, 501) ./ wave.k0(501)), ...
+plot(stratification.er(1 : 101), imag(krho_te(1 : end - 1, ceil(Nf / 2)) ./ wave.k0(ceil(Nf / 2))), ...
     '--', 'LineWidth', 2.0, 'Color', [0 0.4470 0.7410], ...
     'DisplayName', '\Im\{TE1\}');
 hold on;
-plot(stratification.er(1 : 1001), real(krho_tm(1 : 1001, 501) ./ wave.k0(501)), ...
+plot(stratification.er(1 : 101), real(krho_tm(1 : end - 1, ceil(Nf / 2)) ./ wave.k0(ceil(Nf / 2))), ...
     'LineWidth', 2.0, 'Color', [0.8500 0.3250 0.0980], ...
     'DisplayName', '\Re\{TM1\}');
 hold on;
-plot(stratification.er(1 : 1001), imag(krho_tm(1 : 1001, 501) ./ wave.k0(501)), ...
+plot(stratification.er(1 : 101), imag(krho_tm(1 : end - 1, ceil(Nf / 2)) ./ wave.k0(ceil(Nf / 2))), ...
     '--', 'LineWidth', 2.0, 'Color', [0.8500 0.3250 0.0980], ...
     'DisplayName', '\Im\{TM1\}');
 grid on;
-xlim([min(stratification.er(1 : 1001)) max(stratification.er(1 : 1001))]);
+xticks(min(stratification.er(1 : end - 1)) : 2 : max(stratification.er(1 : end - 1)));
+xlim([min(stratification.er(1 : end - 1)) max(stratification.er(1 : end - 1))]);
 legend show;
-xticks(min(stratification.er(1 : 1001)) : 2 : max(stratification.er(1 : 1001)));
 legend('location', 'bestoutside');
 xlabel('\epsilon_{r}');
 ylabel('k_{\rho} / k_{0}');
 title(['Normalized k_{\rho} @ Superstrate, f = ' ...
-    num2str(wave.f(501) * 1e-9) ' GHz, h = ' ...
+    num2str(wave.f(ceil(Nf / 2)) * 1e-9) ' GHz, h = ' ...
     num2str(stratification.h * 1e3) ' mm, ' ...
     'h_{s} = \lambda_{0} / (4 * sqrt(\epsilon_{r}))']);
 saveas(gcf, ['figures\superstrate_krho_f_const_' ...
-    num2str(wave.f(501) * 1e-9) 'GHz.fig']);
+    num2str(wave.f(ceil(Nf / 2)) * 1e-9) 'GHz.fig']);
+
+%% PLOT DIRECTIVITY
+er_idx_7 = find(stratification.er == 7, 1);
+er_idx_12 = find(stratification.er == 12, 1);
+er_idx_25 = find(stratification.er == 25, 1);
+figure('Position', [250 250 750 400]);
+plot(wave.f * 1e-9, 10 * log10(dir_broadside(er_idx_7, :)), ...
+    'LineWidth', 2.0, 'DisplayName', ...
+    ['dir, \epsilon_{r} = ' num2str(stratification.er(er_idx_7))]);
+hold on;
+plot(wave.f * 1e-9, 10 * log10(dir_broadside(er_idx_12, :)), ...
+    'LineWidth', 2.0, 'DisplayName', ...
+    ['dir, \epsilon_{r} = ' num2str(stratification.er(er_idx_12))]);
+hold on;
+plot(wave.f * 1e-9, 10 * log10(dir_broadside(er_idx_25, :)), ...
+    'LineWidth', 2.0, 'DisplayName', ...
+    ['dir, \epsilon_{r} = ' num2str(stratification.er(er_idx_25))]);
+grid on;
+legend show;
+legend('location', 'bestoutside');
+xlabel('f / GHz');
+ylabel('D(\theta=0,\phi=0) / dB');
+title(['Broadside Directivity @ Superstrate, h = ' ...
+    num2str(stratification.h * 1e3) ' mm, ' ...
+    'h_{s} = \lambda_{0} / (4 * sqrt(\epsilon_{r}))']);
+saveas(gcf, 'figures\superstrate_dir.fig');
