@@ -175,9 +175,9 @@ saveas(gcf, ['figures\superstrate_krho_f_const_' ...
     num2str(wave.f(ceil(Nf / 2)) * 1e-9) 'GHz.fig']);
 
 %% PLOT DIRECTIVITY
-er_idx_7 = find(round(stratification.er, 0) == 7, 1);
-er_idx_12 = find(round(stratification.er, 0) == 12, 1);
-er_idx_25 = find(round(stratification.er, 0) == 25, 1);
+er_idx_7 = find(stratification.er == 7, 1);
+er_idx_12 = find(stratification.er == 12, 1);
+er_idx_25 = find(stratification.er == 25, 1);
 figure('Position', [250 250 750 400]);
 plot(wave.f * 1e-9, 10 * log10(dir_broadside(er_idx_7, :)), ...
     'LineWidth', 2.0, 'DisplayName', ...
@@ -245,11 +245,11 @@ legend show;
 legend('location', 'bestoutside');
 xlabel('\theta / deg');
 ylabel('|E| / dB');
-title(['E Far-Field @ \epsilon_{r} = ' ...
+title(['E Far-Field @ Superstrate, \epsilon_{r} = ' ...
     num2str(stratification.er(Ner - 1))]);
 saveas(gcf, 'figures\superstrate_Eff.fig');
 
-%% PLOT DIRECTIVITY
+%% PLOT BANDWIDTH
 figure('Position', [250 250 750 400]);
 plot(stratification.er(1 : end - 1), BW(1 : end - 1), 'LineWidth', 2.0, ...
     'DisplayName', 'BW');
