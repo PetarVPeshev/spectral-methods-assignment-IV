@@ -20,8 +20,6 @@ N = 1001;
 %% DEPENDENT PARAMETERS
 wave.wavelength = c ./ wave.f;
 wave.k0 = 2 * pi ./ wave.wavelength;
-dipole.L = wave.wavelength / 2;
-dipole.W = wave.wavelength / 20;
 
 krho_norm = linspace(1, sqrt(stratification.er), N);
 

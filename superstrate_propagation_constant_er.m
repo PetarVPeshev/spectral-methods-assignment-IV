@@ -20,8 +20,6 @@ N = 1001;
 wave.wavelength = c / wave.f;
 wave.k0 = 2 * pi / wave.wavelength;
 stratification.hs = wave.wavelength ./ (4 * sqrt(stratification.er));
-dipole.L = wave.wavelength / 2;
-dipole.W = wave.wavelength / 20;
 
 krho_te = NaN(1, length(stratification.er));
 krho_tm = NaN(1, length(stratification.er));
