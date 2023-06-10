@@ -7,6 +7,7 @@ if ~exist([pwd() '\figures'], 'dir')
 end
 
 addpath('../spectral-methods-library');
+
 c = physconst('LightSpeed');
 wave_impedance = 376.730313668;
 
