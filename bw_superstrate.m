@@ -113,7 +113,7 @@ legend show;
 legend('location', 'bestoutside');
 xlabel('f / GHz');
 ylabel('D(\theta=0,\phi=0) / dB');
-title(['Broadside Directivity @ Superstrate, ' ...
+title(['Broadside Directivity @ Superstrate, h = ' ...
     num2str(stratification.h * 1e3) ' mm, and ' ...
     'h_{s} = \lambda_{0} / (4 * sqrt(\epsilon_{r}))']);
 saveas(gcf, 'figures\superstrate_dir.fig');
@@ -130,7 +130,7 @@ theta_plot(1 : length(theta)) =  - fliplr(theta) * 180 / pi;
 theta_plot(length(theta) + 1 : end) = theta * 180 / pi;
 freq = [8 10 12];
 % Plot at phi in 0 deg
-figure('Position', [250 250 650 650]);
+figure('Position', [250 25 650 650]);
 subplot(2, 1, 1);
 for e_idx = 1 : 1 : size(Enorm, 3)
     plane_idx_1 = find(round(phi * 180 / pi, 0) == 0, 1);
@@ -152,11 +152,6 @@ legend('location', 'bestoutside');
 xlabel('\theta / deg');
 ylabel('|E| / dB');
 title('\phi = 0 deg');
-% title(['E Far-Field @ Superstrate, \phi = 0 deg, \epsilon_{r} = ' ...
-%     num2str(stratification.er(end))]);
-% saveas(gcf, 'figures\superstrate_Eff_phi0.fig');
-% Plot at phi in 90 deg
-% figure('Position', [250 250 750 400]);
 subplot(2, 1, 2);
 for e_idx = 1 : 1 : size(Enorm, 3)
     plane_idx_1 = find(round(phi * 180 / pi, 0) == 90, 1);
@@ -178,9 +173,10 @@ legend('location', 'bestoutside');
 xlabel('\theta / deg');
 ylabel('|E| / dB');
 title('\phi = 90 deg');
-sgtitle(['E Far-Field @ Superstrate, \epsilon_{r} = ' ...
-    num2str(stratification.er(end))], 'FontWeight', 'bold', ...
-    'FontSize', 12);
+sgtitle(['E Far-Field @ Superstrate, h = ' num2str(stratification.h ...
+    * 1e3) ' mm, h_{s} = \lambda_{0} / (4 * sqrt(\epsilon_{r})), ' ...
+    'and \epsilon_{r} = ' num2str(stratification.er(end))], ...
+    'FontWeight', 'bold', 'FontSize', 12);
 saveas(gcf, 'figures\superstrate_Eff.fig');
 
 %% PLOT BANDWIDTH
@@ -193,5 +189,5 @@ legend('location', 'bestoutside');
 xlabel('\epsilon_{r}');
 ylabel('BW / %');
 title(['Bandwidth @ Superstrate, h = ' num2str(stratification.h * 1e3) ...
-    ' mm']);
+    ' mm, and h_{s} = \lambda_{0} / (4 * sqrt(\epsilon_{r}))']);
 saveas(gcf, 'figures\superstrate_bw.fig');

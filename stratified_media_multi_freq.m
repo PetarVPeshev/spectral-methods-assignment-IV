@@ -13,7 +13,7 @@ function varargout = stratified_media_multi_freq(k0, krho, z, varargin)
             [1 1 size(krho, 1, 2)]), [3 4 2 1]);
 
         % Air propagation vector
-        air_kz = -1j * sqrt( - k0 .^ 2 + krho .^ 2 );
+        air_kz = - 1j * sqrt( - k0 .^ 2 + krho .^ 2 );
 
         % Dielectric propagation vector
         dielectric_k = k0 * sqrt(dielectric_er);
@@ -68,36 +68,40 @@ function varargout = stratified_media_multi_freq(k0, krho, z, varargin)
         air_length = varargin{2};
         dielectric_er = varargin{3};
 
+        k0 = permute(repmat(k0, [1 1 size(krho, 1, 2)]), [3 4 2 1]);
+        z = repmat(z, 1, 1, size(k0, 3));
+        air_length = repmat(air_length, [size(krho, 1, 2, 3)]);
+
         % Air propagation vector
-        air_kz = -1j * sqrt( - k0 ^ 2 + krho .^ 2 );
+        air_kz = - 1j * sqrt( - k0 .^ 2 + krho .^ 2 );
 
         % Dielectric propagation vector
         dielectric_k = k0 * sqrt(dielectric_er);
-        dielectric_kz = - 1j * sqrt( - dielectric_k ^ 2 + krho .^ 2 );
+        dielectric_kz = - 1j * sqrt( - dielectric_k .^ 2 + krho .^ 2 );
 
         % Air impedance
         Zair_te = wave_impedance * k0 ./ air_kz;
-        Zair_tm = wave_impedance * air_kz / k0;
+        Zair_tm = wave_impedance * air_kz ./ k0;
 
         % Dielectric impedance
         Zs = wave_impedance / sqrt(dielectric_er);
         Zs_te = Zs * dielectric_k ./ dielectric_kz;
-        Zs_tm = Zs * dielectric_kz / dielectric_k;
+        Zs_tm = Zs * dielectric_kz ./ dielectric_k;
 
         % Reflection coefficients at interface 1
         gamma_te = (Zs_te - Zair_te) ./ (Zs_te + Zair_te);
         gamma_tm = (Zs_tm - Zair_tm) ./ (Zs_tm + Zair_tm);
 
         % Dielectric medium voltage and current
-        v_te = exp(-1j * air_kz * air_length) ...
-            .* exp(1j * dielectric_kz * air_length) ...
+        v_te = exp(-1j * air_kz .* air_length) ...
+            .* exp(1j * dielectric_kz .* air_length) ...
             .* (1 + gamma_te) .* exp(-1j * dielectric_kz .* z) ...
-            ./ (1 + gamma_te .* exp(-2j * air_kz * air_length));
+            ./ (1 + gamma_te .* exp(-2j * air_kz .* air_length));
         i_te = v_te ./ Zs_te;
-        v_tm = exp(-1j * air_kz * air_length) ...
-            .* exp(1j * dielectric_kz * air_length) ...
+        v_tm = exp(-1j * air_kz .* air_length) ...
+            .* exp(1j * dielectric_kz .* air_length) ...
             .* (1 + gamma_tm) .* exp(-1j * dielectric_kz .* z) ...
-            ./ (1 + gamma_tm .* exp(-2j * air_kz * air_length));
+            ./ (1 + gamma_tm .* exp(-2j * air_kz .* air_length));
         i_tm = v_tm ./ Zs_tm;
 
         varargout{1} = v_te;
