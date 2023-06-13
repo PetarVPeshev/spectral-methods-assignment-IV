@@ -132,10 +132,10 @@ plot(theta_plot, ss_0_plane, 'LineWidth', 2.0, ...
     'DisplayName', '\phi = 0 deg');
 hold on;
 plot(theta_plot, ss_45_plane, 'LineWidth', 2.0, ...
-    'DisplayName', 'phi = 45 deg');
+    'DisplayName', '\phi = 45 deg');
 hold on;
 plot(theta_plot, ss_90_plane, 'LineWidth', 2.0, ...
-    'DisplayName', 'phi = 90 deg');
+    'DisplayName', '\phi = 90 deg');
 grid on;
 xticks(-30 : 5 : 30);
 ylim([-40 0]);
@@ -165,7 +165,7 @@ legend show;
 legend('location', 'bestoutside');
 xlabel('\theta / deg');
 ylabel('|E| / dB');
-title(['|E^{FF}| @ Semi-Infinite Superstrate, Double-Slor Antenna, ' ...
+title(['|E^{FF}| @ Semi-Infinite Superstrate, Double-Slot Antenna, ' ...
     'h = ' num2str(stratification.h * 1e3) ' mm, and ' ...
     '\epsilon_{r} = ' num2str(stratification.er)]);
 saveas(gcf, 'figures\double_slot_eff.fig');
