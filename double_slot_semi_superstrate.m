@@ -50,11 +50,9 @@ z = R * cos(sph_grid(:, :, 1));
 %% WAVE VECTOR
 [k_comp, ~, kx, ky] ...
     = wave_vector_multi_freq(stratification.er, wave.k0, sph_grid);
-% [k_comp, k] = wave_vector(stratification.er, wave.k0, sph_grid);
 k = wave.k0 * sqrt(stratification.er);
 KRHO = sqrt(kx .^ 2 + ky .^ 2);
 k_comp(:, :, 3) = - 1j * sqrt(- k ^ 2 + KRHO .^ 2);
-% k_comp(:, :, 3) = 1j * sqrt(- k ^ 2 + KRHO .^ 2);
     
 %% VOLTAGE AND CURRENT FIELDS OF STRATIFIED MEDIA
 [vte, ite, vtm, itm] = stratified_media(wave.k0, KRHO, z, ...
@@ -169,6 +167,38 @@ title(['|E^{FF}| @ Semi-Infinite Superstrate, Double-Slot Antenna, ' ...
     'h = ' num2str(stratification.h * 1e3) ' mm, and ' ...
     '\epsilon_{r} = ' num2str(stratification.er)]);
 saveas(gcf, 'figures\double_slot_eff.fig');
+
+%% PLOT DIRECTIVITY
+dir_0_plane = NaN(1, 2 * length(theta));
+dir_0_plane(1 : length(theta)) = fliplr(double_slot.dir(plane_180, :));
+dir_0_plane(length(theta) + 1 : end) = double_slot.dir(plane_0, :);
+dir_45_plane = NaN(1, 2 * length(theta));
+dir_45_plane(1 : length(theta)) = fliplr(double_slot.dir(plane_225, :));
+dir_45_plane(length(theta) + 1 : end) = double_slot.dir(plane_45, :);
+dir_90_plane = NaN(1, 2 * length(theta));
+dir_90_plane(1 : length(theta)) = fliplr(double_slot.dir(plane_270, :));
+dir_90_plane(length(theta) + 1 : end) = double_slot.dir(plane_90, :);
+figure('Position', [250 250 750 400]);
+plot(theta_plot, 10 * log10(dir_0_plane), 'LineWidth', 2.0, ...
+    'DisplayName', '\phi = 0 deg');
+hold on;
+plot(theta_plot, 10 * log10(dir_45_plane), 'LineWidth', 2.0, ...
+    'DisplayName', '\phi = 45 deg');
+hold on;
+plot(theta_plot, 10 * log10(dir_90_plane), 'LineWidth', 2.0, ...
+    'DisplayName', '\phi = 90 deg');
+grid on;
+xticks(-30 : 5 : 30);
+xlim([-30 30]);
+ylim([-40 25]);
+legend show;
+legend('location', 'bestoutside');
+xlabel('\theta / deg');
+ylabel('|E| / dB');
+title(['Directivity @ Semi-Infinite Superstrate, Double-Slot Antenna, ' ...
+    'h = ' num2str(stratification.h * 1e3) ' mm, and ' ...
+    '\epsilon_{r} = ' num2str(stratification.er) '']);
+saveas(gcf, 'figures\double_slot_dir.fig');
 
 %% PRINT DOUBLE-SLOT ANTENNA DIRECTIVITY
 fprintf('Double-slot antenna directivity: %.2f dB\n', ...
