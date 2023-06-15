@@ -64,7 +64,7 @@ SGF = spectral_gf(stratification.er, k, kx, ky, vtm, vte, itm, ite, ...
 
 %% SINGLE SLOT MAGNETIC CURRENT
 single_slot.M = ft_current(wave.k0, k_comp, single_slot.W, ...
-    single_slot.L, 1, 'dipole', 'x');
+    single_slot.L, 1, 'dipole', 'y');
 
 %% DOUBLE SLOT MAGNETIC CURRENT
 double_slot.M = single_slot.M .* 2 .* cos(kx * double_slot.d / 2);
